@@ -1,0 +1,299 @@
+package docgen
+
+import (
+	"bytes"
+	"strings"
+	"text/template"
+
+	"bitbucket.org/legalautomation/docgen/ext/num2words"
+	"bitbucket.org/legalautomation/docgen/rules"
+	"bitbucket.org/legalautomation/logging"
+	"github.com/golang-commonmark/markdown"
+	"github.com/jung-kurt/gofpdf"
+)
+
+// Document is the root docgen object, and represents an instance of document generation
+type Document struct {
+	template     string
+	subTemplates struct {
+		docHeader  string
+		pageHeader string
+		pageFooter string
+	}
+	params map[string]interface{}
+	parser *markdown.Markdown
+	fpdf   *gofpdf.Fpdf
+
+	fontFamily string
+	fontSize   int
+	fontStyle  string
+
+	lineHeight float64
+	leftMargin float64
+	writeMode  writeMode
+	alignment  alignment
+
+	table struct {
+		rows [][]cell
+	}
+	link struct {
+		ref  string
+		text string
+	}
+	buffer    string
+	listStyle listStyle
+	listStart int
+}
+
+type alignment uint
+
+const (
+	alignLeft alignment = iota
+	alignCenter
+	alignRight
+)
+
+type cell struct {
+	text string
+	head bool
+}
+
+type writeMode uint
+
+const (
+	normal writeMode = iota
+	tableHead
+	tableCell
+	link
+	strikethrough
+)
+
+type listStyle uint
+
+const (
+	none listStyle = iota
+	dash
+	dot
+	carat
+	numberedDash
+	numberedDot
+	numberedArc
+)
+
+/*PdfConfig A utility config object used to provide the base page size details when initialising the pdf
+ * Fields:
+ * 	Portrait: Flag identifying if the page layout should be portrait, if false, it will be landscape
+ * 	Metric:   Flag identifying if the units of measurement used should be in metric (thus mm), if false, inches are used
+ * 	Paper:    String representing the size of paper to use, options are: "A3", "A4", "A5", "Letter", or "Legal"
+ */
+type PdfConfig struct {
+	Portrait bool
+	Metric   bool
+	Paper    string
+}
+
+/*NewDocument Creates a new document object that represents an instance of document generation
+ * Params:
+ * 	template (string): the template that is the body of the document
+ * 	conf (*PdfConfig): config object to determin the pdf page size, if nil, the default of a portrait A4 page measured in mm will be used
+ */
+func NewDocument(template string, conf *PdfConfig) *Document {
+
+	if conf == nil {
+		conf = &PdfConfig{
+			Portrait: true,
+			Metric:   true,
+			Paper:    "A4",
+		}
+	}
+
+	doc := &Document{
+		template: template,
+		parser:   markdown.New(),
+		// fpdf:       pdf,
+		fontSize:   nominalFontSize,
+		fontStyle:  "",
+		fontFamily: "Arial",
+		lineHeight: 5,
+		// leftMargin: leftMargin,
+	}
+	doc.pdfInit(conf)
+	// pdf generator doesnt support typographic fancy quotes, overwriting the fancy ones to normal ones
+	doc.parser.Typographer = false
+	doc.parser.Linkify = false
+	doc.parser.Quotes = [4]rune{'"', '"', '\'', '\''}
+	doc.parser.HTML = true
+	markdown.RegisterBlockRule(1050, rules.RulePageBreak, nil)
+	markdown.RegisterInlineRule(2200, rules.RuleJustify)
+	return doc
+}
+
+func (d *Document) pdfInit(conf *PdfConfig) {
+	orientation := "L"
+	if conf.Portrait {
+		orientation = "P"
+	}
+	units := "mm"
+	if !conf.Metric {
+		units = "in"
+	}
+	if conf.Paper != "A3" && conf.Paper != "A4" && conf.Paper != "A5" && conf.Paper != "Letter" && conf.Paper != "Legal" {
+		conf.Paper = "A4"
+	}
+	pdf := gofpdf.New(orientation, units, conf.Paper, "")
+	// pdf := gofpdf.New("P", "mm", "A4", "")
+	d.fpdf = pdf
+	leftMargin, _, _, _ := pdf.GetMargins()
+	d.leftMargin = leftMargin
+	pdf.AddPage()
+	pdf.SetFont(d.fontFamily, d.fontStyle, float64(d.fontSize))
+}
+
+// SetDocumentHeader is used to provide the template to use to generate the document header, a template only used once at the start of the document, but for which the page header still occurs
+func (d *Document) SetDocumentHeader(template string) {
+	d.subTemplates.docHeader = template
+}
+
+// SetPageHeader is used to provide a template that will be used to build a header section for each page in the pdf, except the first page
+func (d *Document) SetPageHeader(template string) {
+	d.subTemplates.pageHeader = template
+	if template == "" {
+		d.fpdf.SetHeaderFunc(func() {})
+		return
+	}
+	d.fpdf.SetHeaderFunc(func() {
+		d.params["_page"] = d.fpdf.PageNo()
+		d.renderTemplate(d.subTemplates.pageHeader)
+		d.fpdf.Write(d.lineHeight, "\n\n")
+	})
+}
+
+// SetPageFooter is used to provide a template that will be used to build a footer section for each page in the pdf
+func (d *Document) SetPageFooter(template string) {
+	d.subTemplates.pageFooter = template
+	if template == "" {
+		d.fpdf.SetFooterFunc(func() {})
+		return
+	}
+	d.fpdf.SetFooterFunc(func() {
+		d.params["_page"] = d.fpdf.PageNo()
+		finalMarkdown := templateSubstitution(d.subTemplates.pageFooter, d.params)
+		strWd := d.fpdf.GetStringWidth(finalMarkdown)
+		pgWd, pgHt := d.fpdf.GetPageSize()
+		footHeight := strWd / pgWd
+		_, _, _, bMarg := d.fpdf.GetMargins()
+		if d.fpdf.GetY() <= pgHt-(bMarg+2*d.lineHeight+footHeight) {
+			d.fpdf.SetY(pgHt - (bMarg + 2*d.lineHeight + footHeight))
+			d.fpdf.Write(d.lineHeight, "\n\n")
+		}
+		tokens := d.parser.Parse([]byte(finalMarkdown))
+		for _, tok := range tokens {
+			d.render(tok)
+		}
+	})
+}
+
+func (d *Document) generateDocumentHeader() {
+	if d.subTemplates.docHeader == "" {
+		return
+	}
+	d.renderTemplate(d.subTemplates.docHeader)
+	d.fpdf.Write(d.lineHeight, "\n\n")
+}
+
+// Execute takes in the parameters to use to generate the document, and does the template parse, and document generation, effectively executing all templates loaded into the document
+func (d *Document) Execute(data map[string]interface{}) {
+	d.params = data
+	d.generateDocumentHeader()
+	d.renderTemplate(d.template)
+}
+
+// RenderToFile (called after Execute) this method renders the resultant pdf to a file at fname, as a fully qualified path with filename
+func (d *Document) RenderToFile(fname string) {
+	if !d.fpdf.Ok() {
+		logging.Error("docgen", "Error rendering PDF")
+	} else {
+		d.fpdf.OutputFileAndClose(fname)
+	}
+}
+
+// RenderToString (called after Execute) this method renders the output pdf as a byte string that can be stored in a database or similar
+func (d *Document) RenderToString() string {
+	if !d.fpdf.Ok() {
+		logging.Error("docgen", "Error rendering PDF")
+		return ""
+	}
+	buf := new(bytes.Buffer)
+	d.fpdf.Output(buf)
+	return buf.String()
+}
+
+func (d *Document) renderTemplate(temp string) {
+	finalMarkdown := templateSubstitution(temp, d.params)
+	tokens := d.parser.Parse([]byte(finalMarkdown))
+	for _, tok := range tokens {
+		d.render(tok)
+	}
+}
+
+func templateSubstitution(tmp string, data interface{}) string {
+	temp, _ := templateSplit(tmp)
+
+	funcMap := template.FuncMap{
+		"ToUpper":  strings.ToUpper,
+		"Currency": currencyFormat,
+		"Date":     formatDate,
+		"IntDate":  integerDateFormat,
+		"num2word": num2words.Convert,
+		"add":      add,
+		"subtract": subtract,
+		"multiply": multiply,
+		"divide":   divide,
+		"cb":       codeBlock,
+		"dict":     dictionary,
+		"yn":       boolString,
+	}
+
+	t, err := template.New("letter").Funcs(funcMap).Parse(temp)
+	if err != nil {
+		logging.Error("docgen", "Template parse error: ", err)
+		return temp
+	}
+
+	buf := new(bytes.Buffer)
+	err = t.Execute(buf, data)
+	if err != nil {
+		logging.Error("docgen", "Template render error: ", err)
+		return temp
+	}
+
+	return buf.String()
+}
+
+func templateSplit(template string) (ret string, markUps []string) {
+	for i := 0; i < len(template); i++ {
+		if ((i + 3) < len(template)) && (template[i] == '{') && (template[i+1] == '#') && (template[i+2] == '%') { //opening tag of {#%
+			var markupContent string
+			i += 3 //move beyond the opening tag
+
+			for i < len(template) {
+				if ((i + 2) < len(template)) && (template[i] == '%') && (template[i+1] == '#') && (template[i+2] == '}') {
+					i += 2
+
+					spl := strings.Split(markupContent, "|||")
+					markUps = append(markUps, spl[0])
+					if len(spl) > 1 {
+						ret += string(spl[1])
+					}
+					break
+				} else {
+					markupContent += string(template[i])
+				}
+				i++
+			}
+		} else {
+			ret += string(template[i])
+		}
+	}
+	return
+}
