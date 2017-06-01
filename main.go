@@ -40,9 +40,10 @@ type Document struct {
 		ref  string
 		text string
 	}
-	buffer    string
-	listStyle listStyle
-	listStart int
+	buffer     string
+	listStyle  listStyle
+	listStart  int
+	extensions template.FuncMap
 }
 
 type alignment uint
@@ -128,6 +129,13 @@ func NewDocument(template string, conf *PdfConfig) *Document {
 	return doc
 }
 
+// AddExtensionFunctions adds functions that will be available to the template when executed, it can also be used to overwrite the default functions if necessary
+func (d *Document) AddExtensionFunctions(funcs map[string]interface{}) {
+	for key, val := range funcs {
+		d.extensions[key] = val
+	}
+}
+
 func (d *Document) pdfInit(conf *PdfConfig) {
 	orientation := "L"
 	if conf.Portrait {
@@ -163,7 +171,11 @@ func (d *Document) SetPageHeader(template string) {
 	}
 	d.fpdf.SetHeaderFunc(func() {
 		d.params["_page"] = d.fpdf.PageNo()
-		d.renderTemplate(d.subTemplates.pageHeader)
+		err := d.renderTemplate(d.subTemplates.pageHeader)
+		if err != nil {
+			d.fpdf.SetError(err)
+			return
+		}
 		d.fpdf.Write(d.lineHeight, "\n\n")
 	})
 }
@@ -177,7 +189,11 @@ func (d *Document) SetPageFooter(template string) {
 	}
 	d.fpdf.SetFooterFunc(func() {
 		d.params["_page"] = d.fpdf.PageNo()
-		finalMarkdown := templateSubstitution(d.subTemplates.pageFooter, d.params)
+		finalMarkdown, err := templateSubstitution(d.subTemplates.pageFooter, d.params, d.extensions)
+		if err != nil {
+			d.fpdf.SetError(err)
+			return
+		}
 		strWd := d.fpdf.GetStringWidth(finalMarkdown)
 		pgWd, pgHt := d.fpdf.GetPageSize()
 		footHeight := strWd / pgWd
@@ -193,19 +209,27 @@ func (d *Document) SetPageFooter(template string) {
 	})
 }
 
-func (d *Document) generateDocumentHeader() {
+func (d *Document) generateDocumentHeader() error {
 	if d.subTemplates.docHeader == "" {
-		return
+		return nil
 	}
-	d.renderTemplate(d.subTemplates.docHeader)
+	err := d.renderTemplate(d.subTemplates.docHeader)
+	if err != nil {
+		return err
+	}
 	d.fpdf.Write(d.lineHeight, "\n\n")
+	return nil
 }
 
 // Execute takes in the parameters to use to generate the document, and does the template parse, and document generation, effectively executing all templates loaded into the document
-func (d *Document) Execute(data map[string]interface{}) {
+func (d *Document) Execute(data map[string]interface{}) error {
 	d.params = data
-	d.generateDocumentHeader()
-	d.renderTemplate(d.template)
+	err := d.generateDocumentHeader()
+	if err != nil {
+		return err
+	}
+	err = d.renderTemplate(d.template)
+	return err
 }
 
 // RenderToFile (called after Execute) this method renders the resultant pdf to a file at fname, as a fully qualified path with filename
@@ -228,15 +252,19 @@ func (d *Document) RenderToString() string {
 	return buf.String()
 }
 
-func (d *Document) renderTemplate(temp string) {
-	finalMarkdown := templateSubstitution(temp, d.params)
+func (d *Document) renderTemplate(temp string) error {
+	finalMarkdown, err := templateSubstitution(temp, d.params, d.extensions)
+	if err != nil {
+		return err
+	}
 	tokens := d.parser.Parse([]byte(finalMarkdown))
 	for _, tok := range tokens {
 		d.render(tok)
 	}
+	return nil
 }
 
-func templateSubstitution(tmp string, data interface{}) string {
+func templateSubstitution(tmp string, data interface{}, exts template.FuncMap) (string, error) {
 	temp, _ := templateSplit(tmp)
 
 	funcMap := template.FuncMap{
@@ -254,20 +282,24 @@ func templateSubstitution(tmp string, data interface{}) string {
 		"yn":       boolString,
 	}
 
+	for key, val := range exts {
+		funcMap[key] = val
+	}
+
 	t, err := template.New("letter").Funcs(funcMap).Parse(temp)
 	if err != nil {
 		logging.Error("docgen", "Template parse error: ", err)
-		return temp
+		return temp, err
 	}
 
 	buf := new(bytes.Buffer)
 	err = t.Execute(buf, data)
 	if err != nil {
 		logging.Error("docgen", "Template render error: ", err)
-		return temp
+		return temp, err
 	}
 
-	return buf.String()
+	return buf.String(), nil
 }
 
 func templateSplit(template string) (ret string, markUps []string) {
