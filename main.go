@@ -14,11 +14,17 @@ import (
 
 // Document is the root docgen object, and represents an instance of document generation
 type Document struct {
+	t            *template.Template
 	template     string
+	name         string
 	subTemplates struct {
 		docHeader  string
 		pageHeader string
 		pageFooter string
+		main       []struct {
+			name string
+			body string
+		}
 	}
 	params map[string]interface{}
 	parser *markdown.Markdown
@@ -98,8 +104,7 @@ type PdfConfig struct {
  * 	template (string): the template that is the body of the document
  * 	conf (*PdfConfig): config object to determin the pdf page size, if nil, the default of a portrait A4 page measured in mm will be used
  */
-func NewDocument(template string, conf *PdfConfig) *Document {
-
+func NewDocument(name, templateStr string, conf *PdfConfig) *Document {
 	if conf == nil {
 		conf = &PdfConfig{
 			Portrait: true,
@@ -108,8 +113,12 @@ func NewDocument(template string, conf *PdfConfig) *Document {
 		}
 	}
 
+	t := &template.Template{}
+
 	doc := &Document{
-		template: template,
+		t:        t,
+		name:     name,
+		template: templateStr,
 		parser:   markdown.New(),
 		// fpdf:       pdf,
 		fontSize:   nominalFontSize,
@@ -131,6 +140,9 @@ func NewDocument(template string, conf *PdfConfig) *Document {
 
 // AddExtensionFunctions adds functions that will be available to the template when executed, it can also be used to overwrite the default functions if necessary
 func (d *Document) AddExtensionFunctions(funcs map[string]interface{}) {
+	if d.extensions == nil {
+		d.extensions = template.FuncMap{}
+	}
 	for key, val := range funcs {
 		d.extensions[key] = val
 	}
@@ -171,7 +183,7 @@ func (d *Document) SetPageHeader(template string) {
 	}
 	d.fpdf.SetHeaderFunc(func() {
 		d.params["_page"] = d.fpdf.PageNo()
-		err := d.renderTemplate(d.subTemplates.pageHeader)
+		err := d.renderTemplate("_pageHeader", d.subTemplates.pageHeader)
 		if err != nil {
 			d.fpdf.SetError(err)
 			return
@@ -189,7 +201,7 @@ func (d *Document) SetPageFooter(template string) {
 	}
 	d.fpdf.SetFooterFunc(func() {
 		d.params["_page"] = d.fpdf.PageNo()
-		finalMarkdown, err := templateSubstitution(d.subTemplates.pageFooter, d.params, d.extensions)
+		finalMarkdown, err := templateSubstitution(d.t, "_footer", d.subTemplates.pageFooter, d.params, d.extensions)
 		if err != nil {
 			d.fpdf.SetError(err)
 			return
@@ -213,7 +225,7 @@ func (d *Document) generateDocumentHeader() error {
 	if d.subTemplates.docHeader == "" {
 		return nil
 	}
-	err := d.renderTemplate(d.subTemplates.docHeader)
+	err := d.renderTemplate("_header", d.subTemplates.docHeader)
 	if err != nil {
 		return err
 	}
@@ -221,14 +233,41 @@ func (d *Document) generateDocumentHeader() error {
 	return nil
 }
 
+func (d *Document) RegisterSubTemplate(name, body string) {
+	temp := struct {
+		name string
+		body string
+	}{
+		name: name,
+		body: body,
+	}
+	d.subTemplates.main = append(d.subTemplates.main, temp)
+}
+
 // Execute takes in the parameters to use to generate the document, and does the template parse, and document generation, effectively executing all templates loaded into the document
 func (d *Document) Execute(data map[string]interface{}) error {
 	d.params = data
-	err := d.generateDocumentHeader()
+	err := d.parseSubtemplates()
 	if err != nil {
 		return err
 	}
-	err = d.renderTemplate(d.template)
+	err = d.generateDocumentHeader()
+	if err != nil {
+		return err
+	}
+	err = d.renderTemplate(d.name, d.template)
+	return err
+}
+
+func (d *Document) parseSubtemplates() error {
+	funcs := loadFuncs(d.extensions)
+	var err error
+	for _, temp := range d.subTemplates.main {
+		_, err = d.t.New(temp.name).Funcs(funcs).Parse(temp.body)
+		if err != nil {
+			return err
+		}
+	}
 	return err
 }
 
@@ -252,8 +291,8 @@ func (d *Document) RenderToString() string {
 	return buf.String()
 }
 
-func (d *Document) renderTemplate(temp string) error {
-	finalMarkdown, err := templateSubstitution(temp, d.params, d.extensions)
+func (d *Document) renderTemplate(name, temp string) error {
+	finalMarkdown, err := templateSubstitution(d.t, name, temp, d.params, d.extensions)
 	if err != nil {
 		return err
 	}
@@ -264,29 +303,12 @@ func (d *Document) renderTemplate(temp string) error {
 	return nil
 }
 
-func templateSubstitution(tmp string, data interface{}, exts template.FuncMap) (string, error) {
+func templateSubstitution(t *template.Template, name, tmp string, data interface{}, exts template.FuncMap) (string, error) {
 	temp, _ := templateSplit(tmp)
 
-	funcMap := template.FuncMap{
-		"ToUpper":  strings.ToUpper,
-		"Currency": currencyFormat,
-		"Date":     formatDate,
-		"IntDate":  integerDateFormat,
-		"num2word": num2words.Convert,
-		"add":      add,
-		"subtract": subtract,
-		"multiply": multiply,
-		"divide":   divide,
-		"cb":       codeBlock,
-		"dict":     dictionary,
-		"yn":       boolString,
-	}
-
-	for key, val := range exts {
-		funcMap[key] = val
-	}
-
-	t, err := template.New("letter").Funcs(funcMap).Parse(temp)
+	funcMap := loadFuncs(exts)
+	var err error
+	t, err = t.New(name).Funcs(funcMap).Parse(temp)
 	if err != nil {
 		logging.Error("docgen", "Template parse error: ", err)
 		return temp, err
@@ -328,4 +350,26 @@ func templateSplit(template string) (ret string, markUps []string) {
 		}
 	}
 	return
+}
+
+func loadFuncs(exts template.FuncMap) template.FuncMap {
+	funcMap := template.FuncMap{
+		"ToUpper":  strings.ToUpper,
+		"Currency": currencyFormat,
+		"Date":     formatDate,
+		"IntDate":  integerDateFormat,
+		"num2word": num2words.Convert,
+		"add":      add,
+		"subtract": subtract,
+		"multiply": multiply,
+		"divide":   divide,
+		"cb":       codeBlock,
+		"dict":     dictionary,
+		"yn":       boolString,
+	}
+
+	for key, val := range exts {
+		funcMap[key] = val
+	}
+	return funcMap
 }

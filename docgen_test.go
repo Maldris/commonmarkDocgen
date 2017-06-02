@@ -12,5 +12,8 @@ func TestMain(m *testing.M) {
 
 // TestGen tests document generation
 func TestGen(t *testing.T) {
-	OutputExamplePdf("tests/test.pdf")
+	err := OutputExamplePdf("tests/test.pdf")
+	if err != nil {
+		t.Error(err)
+	}
 }
