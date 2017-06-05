@@ -34,7 +34,7 @@ func (d *Document) render(tok markdown.Token) {
 		d.fpdf.SetLeftMargin(d.leftMargin)
 		d.flushTextStyling()
 		d.fpdf.SetLeftMargin(d.leftMargin)
-		d.fpdf.Write(d.lineHeight, "\n")
+		// d.fpdf.Write(d.lineHeight, "\n")
 		d.fpdf.SetX(d.leftMargin)
 
 	case *markdown.BulletListOpen:
