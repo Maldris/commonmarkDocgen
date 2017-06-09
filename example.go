@@ -3,156 +3,42 @@ package docgen
 // OutputExamplePdf is a test method to generate an extremely simple pdf to test initial generation
 func OutputExamplePdf(destination string) error {
 	template := `I am a test document
-	  hear me roar
-	  I can have included templated content like '{{.include}}'
-	  **and formatted content through markdown**
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah
-	  blah`
+hear me roar
+I can have included templated content like '{{.include}}'
+**and formatted content through markdown**
+blah
+blah
+blah ~ ; test indent with a really reeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaa aaallllllllllllllllll lllllllllllllllllllll lllllyyyyyyyyyyyyyyyyyyy yyyyyyyyy long line
+blah
+blah
+blah
+blah
+
+\hn
+
+| a | b |
+| --- | --- |
+| test table | with cells |
+| and more | cells |
+
+\hl
+
+| a | b |
+| --- | --- |
+| test table | with cells |
+| and more | cells |
+
+blah
+blah
+blah
+blah
+blah
+blah ~ !test indent with a really reeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaa aaallllllllllllllllll lllllllllllllllllllll lllllyyyyyyyyyyyyyyyyyyy yyyyyyyyy long line
+blah!
+blah
+blah ~ test! indent with a really reeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaa aaallllllllllllllllll lllllllllllllllllllll lllllyyyyyyyyyyyyyyyyyyy yyyyyyyyy long line
+
+blah!`
 
 	doc := NewDocument("test", template, nil)
 

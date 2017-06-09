@@ -40,7 +40,8 @@ type Document struct {
 	alignment  alignment
 
 	table struct {
-		rows [][]cell
+		lines bool
+		rows  [][]cell
 	}
 	link struct {
 		ref  string
@@ -49,6 +50,7 @@ type Document struct {
 	buffer     string
 	listStyle  listStyle
 	listStart  int
+	indents    []float64
 	extensions template.FuncMap
 }
 
@@ -129,11 +131,14 @@ func NewDocument(name, templateStr string, conf *PdfConfig) *Document {
 	}
 	doc.pdfInit(conf)
 	// pdf generator doesnt support typographic fancy quotes, overwriting the fancy ones to normal ones
+	doc.table.lines = true
 	doc.parser.Typographer = false
 	doc.parser.Linkify = false
 	doc.parser.Quotes = [4]rune{'"', '"', '\'', '\''}
 	doc.parser.HTML = true
 	markdown.RegisterBlockRule(1050, rules.RulePageBreak, nil)
+	markdown.RegisterBlockRule(1055, rules.RuleTableSettings, nil)
+	markdown.RegisterInlineRule(2000, rules.RuleHangIndent)
 	markdown.RegisterInlineRule(2200, rules.RuleJustify)
 	return doc
 }
@@ -354,6 +359,8 @@ func templateSplit(template string) (ret string, markUps []string) {
 
 func loadFuncs(exts template.FuncMap) template.FuncMap {
 	funcMap := template.FuncMap{
+		"eq":       eq,
+		"Cell":     NewCell,
 		"ToUpper":  strings.ToUpper,
 		"Currency": currencyFormat,
 		"Date":     formatDate,

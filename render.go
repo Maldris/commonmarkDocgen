@@ -256,6 +256,26 @@ func (d *Document) render(tok markdown.Token) {
 	case *rules.PageBreak:
 		d.fpdf.AddPage()
 
+	case *rules.OpenHangingIndent:
+		if d.indents == nil {
+			d.indents = []float64{}
+		}
+		d.indents = append(d.indents, d.leftMargin)
+		d.leftMargin = d.fpdf.GetX()
+		d.fpdf.SetLeftMargin(d.leftMargin)
+	case *rules.ClosenHangingIndent:
+		l := len(d.indents)
+		if l > 0 {
+			d.leftMargin = d.indents[l-1]
+			d.fpdf.SetLeftMargin(d.leftMargin)
+			d.indents = d.indents[:l-1]
+		} else {
+			d.fpdf.SetLeftMargin(10)
+		}
+
+	case *rules.TableHeader:
+		tk := tok.(*rules.TableHeader)
+		d.table.lines = tk.Lines
 	}
 }
 
@@ -327,7 +347,9 @@ func (d *Document) tableMulti() {
 				d.applyStyle("B")
 			}
 			width := cols[i]
-			d.fpdf.Rect(x, y, width, height, "")
+			if d.table.lines {
+				d.fpdf.Rect(x, y, width, height, "")
+			}
 			d.fpdf.MultiCell(width, d.lineHeight+cellMargin, cell.text, "", "", false)
 			x += width
 			d.fpdf.SetXY(x, y)
