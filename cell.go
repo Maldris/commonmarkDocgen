@@ -6,23 +6,23 @@ import (
 )
 
 // Cell is used to provide nested data struct access in templates
-type Cell struct{ v interface{} }
+type varCell struct{ v interface{} }
 
-func NewCell(v ...interface{}) (*Cell, error) {
+func newCell(v ...interface{}) (*varCell, error) {
 	switch len(v) {
 	case 0:
-		return new(Cell), nil
+		return new(varCell), nil
 	case 1:
-		return &Cell{v[0]}, nil
+		return &varCell{v[0]}, nil
 	default:
 		return nil, fmt.Errorf("wrong number of args: want 0 or 1, got %v", len(v))
 	}
 }
 
-func (c *Cell) Set(v interface{}) *Cell { c.v = v; return c }
-func (c *Cell) Get() interface{}        { return c.v }
+func (c *varCell) Set(v interface{}) *varCell { c.v = v; return c }
+func (c *varCell) Get() interface{}           { return c.v }
 
-// eq must be overwritten to support cell
+// eq must be overwritten to support varCell
 func eq(args ...interface{}) bool {
 	if len(args) == 0 {
 		return false
