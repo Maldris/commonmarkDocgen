@@ -276,6 +276,12 @@ func (d *Document) render(tok markdown.Token) {
 	case *rules.TableHeader:
 		tk := tok.(*rules.TableHeader)
 		d.table.lines = tk.Lines
+	case *rules.OpenHideText:
+		tk := tok.(*rules.OpenHideText)
+		d.fpdf.SetFontSize(0)
+		d.fpdf.Write(d.lineHeight, tk.Content)
+		d.fpdf.SetFontSize(float64(d.fontSize))
+
 	}
 }
 

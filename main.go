@@ -140,6 +140,7 @@ func NewDocument(name, templateStr string, conf *PdfConfig) *Document {
 	markdown.RegisterBlockRule(1055, rules.RuleTableSettings, nil)
 	markdown.RegisterInlineRule(2000, rules.RuleHangIndent)
 	markdown.RegisterInlineRule(2200, rules.RuleJustify)
+	markdown.RegisterInlineRule(200, rules.RuleHideText)
 	return doc
 }
 
@@ -360,7 +361,7 @@ func templateSplit(template string) (ret string, markUps []string) {
 func loadFuncs(exts template.FuncMap) template.FuncMap {
 	funcMap := template.FuncMap{
 		"eq":       eq,
-		"Cell":     NewCell,
+		"Cell":     newCell,
 		"ToUpper":  strings.ToUpper,
 		"Currency": currencyFormat,
 		"Date":     formatDate,
