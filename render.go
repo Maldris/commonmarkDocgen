@@ -1,12 +1,12 @@
 package docgen
 
 import (
+	"fmt"
 	"math"
 	"reflect"
 	"strings"
 
-	"bitbucket.org/legalautomation/docgen/rules"
-	"bitbucket.org/legalautomation/logging"
+	"github.com/Maldris/commonmarkDocgen/rules"
 	"github.com/golang-commonmark/markdown"
 )
 
@@ -24,7 +24,7 @@ const (
 )
 
 func (d *Document) render(tok markdown.Token) {
-	logging.Info("docgen", "[", tok.Tag(), "]", reflect.TypeOf(tok), " :: ", tok.Block(), " # ", tok)
+	fmt.Printf("[docgen] [%v] %v :: %v # %v", tok.Tag(), reflect.TypeOf(tok), tok.Block(), tok)
 	switch tok.(type) {
 	case *markdown.BlockquoteOpen:
 		d.leftMargin += nominalIndent

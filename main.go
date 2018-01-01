@@ -2,12 +2,12 @@ package docgen
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"text/template"
 
-	"bitbucket.org/legalautomation/docgen/ext/num2words"
-	"bitbucket.org/legalautomation/docgen/rules"
-	"bitbucket.org/legalautomation/logging"
+	"github.com/Maldris/commonmarkDocgen/ext/num2words"
+	"github.com/Maldris/commonmarkDocgen/rules"
 	"github.com/golang-commonmark/markdown"
 	"github.com/jung-kurt/gofpdf"
 )
@@ -278,23 +278,26 @@ func (d *Document) parseSubtemplates() error {
 }
 
 // RenderToFile (called after Execute) this method renders the resultant pdf to a file at fname, as a fully qualified path with filename
-func (d *Document) RenderToFile(fname string) {
+func (d *Document) RenderToFile(fname string) error {
 	if !d.fpdf.Ok() {
-		logging.Error("docgen", "Error rendering PDF")
-	} else {
-		d.fpdf.OutputFileAndClose(fname)
+		err := d.fpdf.Error()
+		fmt.Printf("[docgen] Error rendering PDF: %v", err)
+		return err
 	}
+	d.fpdf.OutputFileAndClose(fname)
+	return nil
 }
 
 // RenderToString (called after Execute) this method renders the output pdf as a byte string that can be stored in a database or similar
-func (d *Document) RenderToString() string {
+func (d *Document) RenderToString() (string, error) {
 	if !d.fpdf.Ok() {
-		logging.Error("docgen", "Error rendering PDF")
-		return ""
+		err := d.fpdf.Error()
+		fmt.Printf("[docgen] Error rendering PDF: %v", err)
+		return "", err
 	}
 	buf := new(bytes.Buffer)
 	d.fpdf.Output(buf)
-	return buf.String()
+	return buf.String(), nil
 }
 
 func (d *Document) renderTemplate(name, temp string) error {
@@ -316,14 +319,14 @@ func templateSubstitution(t *template.Template, name, tmp string, data interface
 	var err error
 	t, err = t.New(name).Funcs(funcMap).Parse(temp)
 	if err != nil {
-		logging.Error("docgen", "Template parse error: ", err)
+		fmt.Printf("[docgen] Template parse error: %v", err)
 		return temp, err
 	}
 
 	buf := new(bytes.Buffer)
 	err = t.Execute(buf, data)
 	if err != nil {
-		logging.Error("docgen", "Template render error: ", err)
+		fmt.Printf("[docgen] Template render error: %v", err)
 		return temp, err
 	}
 
