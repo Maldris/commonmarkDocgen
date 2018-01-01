@@ -1,8 +1,6 @@
 package rules
 
 import (
-	"log"
-
 	"github.com/golang-commonmark/markdown"
 )
 
@@ -55,7 +53,6 @@ func RuleTableSettings(s *markdown.StateBlock, startLine, endLine int, silent bo
 	}
 
 	var lines bool = false
-	log.Print("table heading setting: " + string(src[pos+2]))
 	if src[pos+2] == 't' || src[pos+2] == 'l' {
 		lines = true
 	}
