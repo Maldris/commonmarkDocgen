@@ -239,6 +239,7 @@ func (d *Document) generateDocumentHeader() error {
 	return nil
 }
 
+// RegisterSubTemplate will register a new template with name and body, this new template can then be invoked inside the documents template
 func (d *Document) RegisterSubTemplate(name, body string) {
 	temp := struct {
 		name string
