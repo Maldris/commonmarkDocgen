@@ -52,6 +52,8 @@ type Document struct {
 	listStart  int
 	indents    []float64
 	extensions template.FuncMap
+
+	Debug bool
 }
 
 type alignment uint

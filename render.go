@@ -24,7 +24,9 @@ const (
 )
 
 func (d *Document) render(tok markdown.Token) {
-	fmt.Printf("[docgen] [%v] %v :: %v # %v", tok.Tag(), reflect.TypeOf(tok), tok.Block(), tok)
+	if d.Debug {
+		fmt.Printf("[docgen] [%v] %v :: %v # %v", tok.Tag(), reflect.TypeOf(tok), tok.Block(), tok)
+	}
 	switch tok.(type) {
 	case *markdown.BlockquoteOpen:
 		d.leftMargin += nominalIndent
