@@ -108,13 +108,11 @@ func (d *Document) render(tok markdown.Token) {
 		d.removeStyle("B")
 
 	case *markdown.StrikethroughOpen: // TODO
-		d.writeMode = strikethrough
-	case *markdown.StrikethroughClose: // TODO
-		// HACK: (scott 9/12/2016): yeah, this is a hack, but I dont know how else to make it work for now, so it can stay :P
-		// Never mind, didnt work anyway -.-
-		html := d.fpdf.HTMLBasicNew()
-		html.Write(d.lineHeight, "<del>"+d.buffer+"<del>")
-		d.writeMode = normal
+		// d.writeMode = strikethrough
+	case *markdown.StrikethroughClose: // TODO: make this work, the original attempt (commented below) didnt work
+		// html := d.fpdf.HTMLBasicNew()
+		// html.Write(d.lineHeight, "<del>"+d.buffer+"<del>")
+		// d.writeMode = normal
 
 	case *markdown.Softbreak:
 		d.fpdf.Write(d.lineHeight, "\n")
