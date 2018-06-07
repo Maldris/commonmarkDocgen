@@ -29,10 +29,10 @@ func (d *Document) render(tok markdown.Token) {
 	}
 	switch tok.(type) {
 	case *markdown.BlockquoteOpen:
-		d.leftMargin += nominalIndent
+		d.leftMargin += d.sizes.NominalIndent
 		d.fpdf.SetLeftMargin(d.leftMargin)
 	case *markdown.BlockquoteClose:
-		d.leftMargin -= nominalIndent
+		d.leftMargin -= d.sizes.NominalIndent
 		d.fpdf.SetLeftMargin(d.leftMargin)
 		d.flushTextStyling()
 		d.fpdf.SetLeftMargin(d.leftMargin)
@@ -41,13 +41,13 @@ func (d *Document) render(tok markdown.Token) {
 
 	case *markdown.BulletListOpen:
 		d.listStyle = dash
-		d.leftMargin += nominalIndent
+		d.leftMargin += d.sizes.NominalIndent
 		d.fpdf.SetLeftMargin(d.leftMargin)
 		d.flushTextStyling()
 		d.fpdf.SetLeftMargin(d.leftMargin)
 	case *markdown.BulletListClose:
 		d.listStyle = none
-		d.leftMargin -= nominalIndent
+		d.leftMargin -= d.sizes.NominalIndent
 		d.fpdf.SetLeftMargin(d.leftMargin)
 		d.flushTextStyling()
 		d.fpdf.SetLeftMargin(d.leftMargin)
@@ -57,13 +57,13 @@ func (d *Document) render(tok markdown.Token) {
 		tk := tok.(*markdown.OrderedListOpen)
 		d.listStart = tk.Map[0]
 		d.listStyle = numberedDot
-		d.leftMargin += nominalIndent
+		d.leftMargin += d.sizes.NominalIndent
 		d.fpdf.SetLeftMargin(d.leftMargin)
 		d.flushTextStyling()
 		d.fpdf.SetLeftMargin(d.leftMargin)
 	case *markdown.OrderedListClose:
 		d.listStyle = none
-		d.leftMargin -= nominalIndent
+		d.leftMargin -= d.sizes.NominalIndent
 		d.fpdf.SetLeftMargin(d.leftMargin)
 		d.flushTextStyling()
 		d.fpdf.SetLeftMargin(d.leftMargin)
@@ -79,12 +79,12 @@ func (d *Document) render(tok markdown.Token) {
 			tk := tok.(*markdown.ListItemOpen)
 			d.fpdf.Writef(d.lineHeight, "%v.", (tk.Map[0]-d.listStart)+1)
 		}
-		d.leftMargin += bulletIndent
+		d.leftMargin += d.sizes.BulletIndent
 		d.fpdf.SetLeftMargin(d.leftMargin)
 		d.flushTextStyling()
 		d.fpdf.SetLeftMargin(d.leftMargin)
 	case *markdown.ListItemClose:
-		d.leftMargin -= bulletIndent
+		d.leftMargin -= d.sizes.BulletIndent
 		d.fpdf.SetLeftMargin(d.leftMargin)
 		d.flushTextStyling()
 		d.fpdf.SetLeftMargin(d.leftMargin)
@@ -125,23 +125,23 @@ func (d *Document) render(tok markdown.Token) {
 		hd := tok.(*markdown.HeadingOpen)
 		switch hd.HLevel {
 		case 1:
-			d.fontSize = heading1FontSize
+			d.fontSize = int(d.sizes.Heading1FontSize)
 		case 2:
-			d.fontSize = heading2FontSize
+			d.fontSize = int(d.sizes.Heading2FontSize)
 		case 3:
-			d.fontSize = heading3FontSize
+			d.fontSize = int(d.sizes.Heading3FontSize)
 		case 4:
-			d.fontSize = heading4FontSize
+			d.fontSize = int(d.sizes.Heading4FontSize)
 		case 5:
-			d.fontSize = heading5FontSize
+			d.fontSize = int(d.sizes.Heading5FontSize)
 		case 6:
-			d.fontSize = heading6FontSize
+			d.fontSize = int(d.sizes.Heading6FontSize)
 		}
-		d.lineHeight *= float64(d.fontSize) / nominalFontSize
+		d.lineHeight *= float64(d.fontSize) / d.sizes.NominalFontSize
 		d.flushTextStyling()
 	case *markdown.HeadingClose:
-		d.lineHeight /= float64(d.fontSize) / nominalFontSize
-		d.fontSize = nominalFontSize
+		d.lineHeight /= float64(d.fontSize) / d.sizes.NominalFontSize
+		d.fontSize = int(d.sizes.NominalFontSize)
 		d.flushTextStyling()
 		d.fpdf.Write(d.lineHeight, "\n\n")
 
@@ -306,10 +306,10 @@ func (d *Document) codeBlock(content string) {
 	lmarge, _, rmarge, _ := d.fpdf.GetMargins()
 	r, g, b := d.fpdf.GetFillColor()
 	d.fpdf.SetFillColor(180, 180, 180)
-	d.leftMargin += nominalIndent
+	d.leftMargin += d.sizes.NominalIndent
 	d.fpdf.SetLeftMargin(d.leftMargin)
 	d.fpdf.MultiCell(wpage-(lmarge+rmarge)-20, d.lineHeight, content, "", "", true)
-	d.leftMargin -= nominalIndent
+	d.leftMargin -= d.sizes.NominalIndent
 	d.fpdf.SetLeftMargin(d.leftMargin)
 	d.fpdf.SetFillColor(r, g, b)
 	d.fpdf.Write(d.lineHeight, "\n")
@@ -335,7 +335,7 @@ func (d *Document) tableMulti() {
 				d.applyStyle("B")
 			}
 			lines := d.fpdf.SplitLines([]byte(cell.text), cols[i])
-			h := float64(len(lines))*d.lineHeight + float64(cellMargin*len(lines))
+			h := float64(len(lines))*d.lineHeight + float64(int(d.sizes.CellMargin)*len(lines))
 			if h > height {
 				height = h
 			}
@@ -356,7 +356,7 @@ func (d *Document) tableMulti() {
 			if d.table.lines {
 				d.fpdf.Rect(x, y, width, height, "")
 			}
-			d.fpdf.MultiCell(width, d.lineHeight+cellMargin, cell.text, "", "", false)
+			d.fpdf.MultiCell(width, d.lineHeight+d.sizes.CellMargin, cell.text, "", "", false)
 			x += width
 			d.fpdf.SetXY(x, y)
 			if cell.head {

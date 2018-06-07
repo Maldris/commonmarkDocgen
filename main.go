@@ -52,6 +52,7 @@ type Document struct {
 	listStart  int
 	indents    []float64
 	extensions template.FuncMap
+	sizes      SizesConfig
 
 	Debug bool
 }
@@ -96,11 +97,39 @@ const (
  * 	Portrait: Flag identifying if the page layout should be portrait, if false, it will be landscape
  * 	Metric:   Flag identifying if the units of measurement used should be in metric (thus mm), if false, inches are used
  * 	Paper:    String representing the size of paper to use, options are: "A3", "A4", "A5", "Letter", or "Legal"
+ *  Sizes:    a SizesConfig object expressing which sizes to use for indents and fonts, any left as 0 will revert to the default values
  */
 type PdfConfig struct {
 	Portrait bool
 	Metric   bool
 	Paper    string
+	Sizes    SizesConfig
+}
+
+/*SizesConfig A utility config object used to express the desired size and spacing used in the pdf
+ * Fields:
+ *   NominalIndent:     basic indent used for blockquotes and other indented elements
+ *   BulletIndent:      indent used for each set of bullets
+ *   NominalFontSize:   base font size
+ *   Heading1FontSize:  heading level 1 fond size
+ *   Heading2FontSize:  heading level 2 fond size
+ *   Heading3FontSize:  heading level 3 fond size
+ *   Heading4FontSize:  heading level 4 fond size
+ *   Heading5FontSize:  heading level 5 fond size
+ *   Heading6FontSize:  heading level 6 fond size
+ *   CellMargin:        top and bottom cell margin for table cells
+ */
+type SizesConfig struct {
+	NominalIndent    float64
+	BulletIndent     float64
+	NominalFontSize  float64
+	Heading1FontSize float64
+	Heading2FontSize float64
+	Heading3FontSize float64
+	Heading4FontSize float64
+	Heading5FontSize float64
+	Heading6FontSize float64
+	CellMargin       float64
 }
 
 /*NewDocument Creates a new document object that represents an instance of document generation
@@ -116,6 +145,36 @@ func NewDocument(name, templateStr string, conf *PdfConfig) *Document {
 			Paper:    "A4",
 		}
 	}
+	if conf.Sizes.NominalIndent == 0 {
+		conf.Sizes.NominalIndent = nominalIndent
+	}
+	if conf.Sizes.BulletIndent == 0 {
+		conf.Sizes.BulletIndent = bulletIndent
+	}
+	if conf.Sizes.NominalFontSize == 0 {
+		conf.Sizes.NominalFontSize = nominalFontSize
+	}
+	if conf.Sizes.Heading1FontSize == 0 {
+		conf.Sizes.Heading1FontSize = heading1FontSize
+	}
+	if conf.Sizes.Heading2FontSize == 0 {
+		conf.Sizes.Heading2FontSize = heading2FontSize
+	}
+	if conf.Sizes.Heading3FontSize == 0 {
+		conf.Sizes.Heading3FontSize = heading3FontSize
+	}
+	if conf.Sizes.Heading4FontSize == 0 {
+		conf.Sizes.Heading4FontSize = heading4FontSize
+	}
+	if conf.Sizes.Heading5FontSize == 0 {
+		conf.Sizes.Heading5FontSize = heading5FontSize
+	}
+	if conf.Sizes.Heading6FontSize == 0 {
+		conf.Sizes.Heading6FontSize = heading6FontSize
+	}
+	if conf.Sizes.CellMargin == 0 {
+		conf.Sizes.CellMargin = cellMargin
+	}
 
 	t := &template.Template{}
 
@@ -130,6 +189,7 @@ func NewDocument(name, templateStr string, conf *PdfConfig) *Document {
 		fontFamily: "Arial",
 		lineHeight: 5,
 		// leftMargin: leftMargin,
+		sizes: conf.Sizes,
 	}
 	doc.pdfInit(conf)
 	// pdf generator doesnt support typographic fancy quotes, overwriting the fancy ones to normal ones
