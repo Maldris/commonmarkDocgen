@@ -29,7 +29,7 @@ func eq(args ...interface{}) bool {
 	}
 	x := args[0]
 	switch x := x.(type) {
-	case string, int, int64, byte, float32, float64:
+	case string, int, int64, uint, uint64, byte, float32, float64:
 		for _, y := range args[1:] {
 			if x == y {
 				return true
