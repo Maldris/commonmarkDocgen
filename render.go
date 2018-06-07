@@ -231,9 +231,9 @@ func (d *Document) render(tok markdown.Token) {
 			}
 		case tableHead:
 			// d.table.head = append(d.table.head, content)
-			d.table.rows[len(d.table.rows)-1] = append(d.table.rows[len(d.table.rows)-1], cell{text: content, head: true})
+			d.table.rows[len(d.table.rows)-1] = append(d.table.rows[len(d.table.rows)-1], cell{text: strings.Replace(content, "\\n", "\n", -1), head: true})
 		case tableCell:
-			d.table.rows[len(d.table.rows)-1] = append(d.table.rows[len(d.table.rows)-1], cell{text: content, head: false})
+			d.table.rows[len(d.table.rows)-1] = append(d.table.rows[len(d.table.rows)-1], cell{text: strings.Replace(content, "\\n", "\n", -1), head: false})
 		case link:
 			d.link.text = content
 		case strikethrough:
