@@ -117,7 +117,7 @@ This library comes with a few extra markup literals added, at both the block and
 
 **\page** will insert a page break in the document
 
-**\thead** is a header element that can be used to customize the behavior of following tables with a series of arguments that follow it in any order i.e. `\thead lt sfull c:1:2`
+**\thead** is a header element that can be used to customize the behavior of following tables with a series of arguments that follow it in any order i.e. `\thead lt sfull c:1:2 ar`
 > **lines** turn on and off drawing the tables lines
 >> any argument beginning with l is interpreted as a lines argument
 >>
@@ -142,6 +142,17 @@ This library comes with a few extra markup literals added, at both the block and
 >> each column will then be printed as a fraction of the sum of all argument components
 >>
 >> i.e. `\thead c:1:2:1` will applied to a 3 column table will have a central column twice the width of the outer two.
+
+> **table alignment** allows the table, if smaller than page width, to be aligned to the left, center or right of the page
+>> any argument starting with **a** is an alignment argument, with the following character denoting mode
+>>
+>> **al** aligns the table with the left margin
+>>
+>> **ac** (default) centers the table on the page
+>>
+>> **ar** aligns the table with the right margin
+>>
+>> i.e. `\thead al` will left align the table
 
 ### Inline
 
