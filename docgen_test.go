@@ -35,14 +35,14 @@ blah
 blah
 blah
 
-\thead ln shalf
+\thead ln shalf ac
 
 | a | b |
 | --- | --- |
 | test table | with cells |
 | and more | cells |
 
-\thead ll sfull
+\thead ll sfull ar
 
 | a | b |
 | --- | --- |

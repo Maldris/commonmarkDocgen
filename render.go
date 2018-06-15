@@ -279,6 +279,7 @@ func (d *Document) render(tok markdown.Token) {
 		d.table.size = tk.Size
 		d.table.cols = tk.Cols
 		d.table.colsum = tk.Colsum
+		d.table.align = tk.Alignment
 	case *rules.OpenHideText:
 		tk := tok.(*rules.OpenHideText)
 		d.fpdf.SetFontSize(0)
@@ -325,11 +326,17 @@ func (d *Document) tableMulti() {
 	_, pageh := d.fpdf.GetPageSize()
 	_, _, _, mbottom := d.fpdf.GetMargins()
 
-	cols := d.calcTableColumnWidths()
+	cols, lmarg := d.calcTableColumnWidths()
+	if d.table.align == rules.AlignCenter {
+		lmarg = lmarg / 2
+	} else if d.table.align == rules.AlignLeft {
+		lmarg = 0
+	}
 
 	for _, row := range d.table.rows {
 		curx, y := d.fpdf.GetXY()
-		x := curx
+		x := curx + lmarg
+		d.fpdf.SetX(x)
 
 		height := 0.0
 
@@ -372,7 +379,7 @@ func (d *Document) tableMulti() {
 	d.fpdf.SetLineWidth(line)
 }
 
-func (d *Document) calcTableColumnWidths() []float64 {
+func (d *Document) calcTableColumnWidths() ([]float64, float64) {
 
 	wdspace := math.Ceil(d.fpdf.GetStringWidth(" "))
 
@@ -423,22 +430,26 @@ func (d *Document) calcTableColumnWidths() []float64 {
 		max = max / 2
 	}
 	var cols []float64
+	var sum float64
 	if len(d.table.cols) > 0 {
 		cols = append(cols, d.table.cols...)
 		for i := range cols {
 			cols[i] = (cols[i] / d.table.colsum) * max
+			sum += (cols[i] / d.table.colsum) * max
 		}
 	} else {
 		if d.table.size == rules.SizeWrap && total <= (max) {
 			for _, col := range c {
 				cols = append(cols, col.max)
+				sum += col.max
 			}
 		} else {
 			for _, col := range c {
 				cols = append(cols, (col.average/avgTotal)*(max))
+				sum += (col.average / avgTotal) * (max)
 			}
 		}
 	}
-	return cols
+	return cols, ((wpage - (lmarge + rmarge)) - sum)
 
 }

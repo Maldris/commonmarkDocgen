@@ -9,11 +9,12 @@ import (
 )
 
 type TableHeader struct {
-	lvl    int
-	Lines  bool
-	Size   SizeMode
-	Cols   []float64
-	Colsum float64
+	lvl       int
+	Lines     bool
+	Size      SizeMode
+	Cols      []float64
+	Colsum    float64
+	Alignment AlignMode
 }
 
 type SizeMode int
@@ -23,6 +24,14 @@ const (
 	SizeWrap                      // 1
 	SizeHalf                      // 2
 	SizeFull                      // 3
+)
+
+type AlignMode int
+
+const (
+	AlignCenter AlignMode = iota // 0
+	AlignLeft                    // 1
+	AlignRight                   // 2
 )
 
 func (j *TableHeader) Tag() string {
@@ -73,9 +82,10 @@ func RuleTableSettings(s *markdown.StateBlock, startLine, endLine int, silent bo
 	}
 
 	tok := TableHeader{
-		Lines: true,
-		Size:  SizeWrap,
-		Cols:  []float64{},
+		Lines:     true,
+		Size:      SizeWrap,
+		Cols:      []float64{},
+		Alignment: AlignCenter,
 	}
 
 	exprs := strings.Split(src[pos+6:s.BMarks[startLine+1]], " ")
@@ -83,6 +93,15 @@ func RuleTableSettings(s *markdown.StateBlock, startLine, endLine int, silent bo
 	for _, exp := range exprs {
 		exp = strings.Trim(exp, " \r\n\t")
 		switch {
+		case strings.HasPrefix(exp, "a"):
+			switch exp {
+			case "al":
+				tok.Alignment = AlignLeft
+			case "ar":
+				tok.Alignment = AlignRight
+			default:
+				tok.Alignment = AlignCenter
+			}
 		case strings.HasPrefix(exp, "l"):
 			tok.Lines = exp == "lt" || exp == "ll"
 		case strings.HasPrefix(exp, "s"):

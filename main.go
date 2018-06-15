@@ -44,6 +44,7 @@ type Document struct {
 		size   rules.SizeMode
 		cols   []float64
 		colsum float64
+		align  rules.AlignMode
 		rows   [][]cell
 	}
 	link struct {
@@ -200,6 +201,7 @@ func NewDocument(name, templateStr string, conf *PdfConfig) *Document {
 	doc.table.size = rules.SizeWrap
 	doc.table.cols = []float64{}
 	doc.table.colsum = 0
+	doc.table.align = rules.AlignCenter
 	doc.parser.Typographer = false
 	doc.parser.Linkify = false
 	doc.parser.Quotes = [4]rune{'"', '"', '\'', '\''}
