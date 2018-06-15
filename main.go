@@ -40,8 +40,11 @@ type Document struct {
 	alignment  alignment
 
 	table struct {
-		lines bool
-		rows  [][]cell
+		lines  bool
+		size   rules.SizeMode
+		cols   []float64
+		colsum float64
+		rows   [][]cell
 	}
 	link struct {
 		ref  string
@@ -194,6 +197,9 @@ func NewDocument(name, templateStr string, conf *PdfConfig) *Document {
 	doc.pdfInit(conf)
 	// pdf generator doesnt support typographic fancy quotes, overwriting the fancy ones to normal ones
 	doc.table.lines = true
+	doc.table.size = rules.SizeWrap
+	doc.table.cols = []float64{}
+	doc.table.colsum = 0
 	doc.parser.Typographer = false
 	doc.parser.Linkify = false
 	doc.parser.Quotes = [4]rune{'"', '"', '\'', '\''}
