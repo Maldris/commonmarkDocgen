@@ -39,9 +39,9 @@ func RulePageBreak(s *markdown.StateBlock, startLine, endLine int, silent bool) 
 	pos := s.BMarks[startLine] + shift
 	src := s.Src
 
-	marker := src[pos : pos+2]
+	marker := src[pos : pos+5]
 
-	if marker != "\\p" {
+	if marker != "\\page" {
 		return
 	}
 
