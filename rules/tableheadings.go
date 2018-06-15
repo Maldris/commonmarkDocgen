@@ -42,9 +42,13 @@ func RuleTableSettings(s *markdown.StateBlock, startLine, endLine int, silent bo
 	pos := s.BMarks[startLine] + shift
 	src := s.Src
 
-	marker := src[pos : pos+2]
+	if len(src) < pos+7 {
+		return
+	}
 
-	if marker != "\\h" {
+	marker := src[pos : pos+6]
+
+	if marker != "\\thead" {
 		return
 	}
 
@@ -53,7 +57,7 @@ func RuleTableSettings(s *markdown.StateBlock, startLine, endLine int, silent bo
 	}
 
 	var lines bool = false
-	if src[pos+2] == 't' || src[pos+2] == 'l' {
+	if src[pos+6] == 't' || src[pos+6] == 'l' {
 		lines = true
 	}
 
