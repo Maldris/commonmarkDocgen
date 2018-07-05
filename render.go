@@ -450,6 +450,10 @@ func (d *Document) calcTableColumnWidths() ([]float64, float64) {
 			}
 		}
 	}
-	return cols, ((wpage - (lmarge + rmarge)) - sum)
+	offset := ((wpage - (lmarge + rmarge)) - sum)
+	if offset < 0 {
+		offset = 0
+	}
+	return cols, offset
 
 }
