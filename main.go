@@ -204,7 +204,7 @@ func NewDocument(name, templateStr string, conf *PdfConfig) *Document {
 	doc.table.align = rules.AlignCenter
 	doc.parser.Typographer = false
 	doc.parser.Linkify = false
-	doc.parser.Quotes = [4]rune{'"', '"', '\'', '\''}
+	doc.parser.Quotes = [4]string{"\"", "\"", "'", "'"}
 	doc.parser.HTML = true
 	markdown.RegisterBlockRule(1050, rules.RulePageBreak, nil)
 	markdown.RegisterBlockRule(1055, rules.RuleTableSettings, nil)
