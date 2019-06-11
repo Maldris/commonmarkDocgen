@@ -1,7 +1,7 @@
 # commonmarkDocgen
 generate PDF documents from a commonmark markdown template
 
-Built using [jung kurt's gofpdf](https://github.com/jung-kurt/gofpdf) and [golang-commonmark's markdown parser](github.com/golang-commonmark/markdown)
+Built using [jung kurt's gofpdf](https://github.com/jung-kurt/gofpdf) and [golang-commonmark's markdown parser](https://github.com/golang-commonmark/markdown)
 
 
 ## Remaining TODOs
