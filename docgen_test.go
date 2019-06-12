@@ -31,6 +31,9 @@ blah
 blah
 blah ~ ; test indent with a really reeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaa aaallllllllllllllllll lllllllllllllllllllll lllllyyyyyyyyyyyyyyyyyyy yyyyyyyyy long line
 blah
+
+---
+
 blah
 blah
 blah
@@ -60,6 +63,8 @@ blah
 blah
 
 blah ~ !test indent with a really reeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaa aaallllllllllllllllll lllllllllllllllllllll lllllyyyyyyyyyyyyyyyyyyy yyyyyyyyy long line
+
+\page
 
 blah!
 
