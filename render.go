@@ -25,7 +25,7 @@ const (
 
 func (d *Document) render(tok markdown.Token) {
 	if d.Debug {
-		fmt.Printf("[docgen] [%v] %v :: %v # %v", tok.Tag(), reflect.TypeOf(tok), tok.Block(), tok)
+		fmt.Printf("[docgen] [%v] %v :: %v # %v\r\n", tok.Tag(), reflect.TypeOf(tok), tok.Block(), tok)
 	}
 	switch tok.(type) {
 	case *markdown.BlockquoteOpen:
