@@ -1,6 +1,6 @@
 package rules
 
-import "github.com/golang-commonmark/markdown"
+import "gitlab.com/golang-commonmark/markdown"
 
 type PageBreak struct {
 	lvl int

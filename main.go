@@ -8,8 +8,8 @@ import (
 
 	"github.com/Maldris/commonmarkDocgen/functions"
 	"github.com/Maldris/commonmarkDocgen/rules"
-	"github.com/golang-commonmark/markdown"
 	"github.com/jung-kurt/gofpdf"
+	"gitlab.com/golang-commonmark/markdown"
 )
 
 // Document is the root docgen object, and represents an instance of document generation

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/Maldris/commonmarkDocgen/rules"
-	"github.com/golang-commonmark/markdown"
+	"gitlab.com/golang-commonmark/markdown"
 )
 
 const (

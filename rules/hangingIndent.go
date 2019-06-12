@@ -1,7 +1,7 @@
 package rules
 
 import (
-	"github.com/golang-commonmark/markdown"
+	"gitlab.com/golang-commonmark/markdown"
 )
 
 type OpenHangingIndent struct {
