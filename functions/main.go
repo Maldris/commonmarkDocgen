@@ -3,7 +3,7 @@ package functions
 import (
 	"text/template"
 
-	"github.com/Maldris/commonmarkDocgen/ext/num2words"
+	"github.com/Maldris/commonmarkDocgen/functions/num2words"
 )
 
 func GetFunctionMap(exts template.FuncMap) template.FuncMap {
