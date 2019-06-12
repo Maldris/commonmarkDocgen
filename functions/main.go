@@ -9,14 +9,14 @@ import (
 func GetFunctionMap(exts template.FuncMap) template.FuncMap {
 	funcMap := template.FuncMap{
 		"eq":       eq,
-		"Cell":     newCell,
+		"cell":     newCell,
 		"lower":    lower,
 		"upper":    upper,
 		"caps":     upper,
 		"title":    title,
-		"Currency": currencyFormat,
-		"Date":     formatDate,
-		"IntDate":  integerDateFormat,
+		"currency": currencyFormat,
+		"date":     formatDate,
+		"intDate":  integerDateFormat,
 		"num2word": num2words.Convert,
 		"add":      add,
 		"subtract": subtract,
