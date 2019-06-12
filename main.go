@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/Maldris/commonmarkDocgen/ext/num2words"
+	"github.com/Maldris/commonmarkDocgen/functions"
 	"github.com/Maldris/commonmarkDocgen/rules"
 	"github.com/golang-commonmark/markdown"
 	"github.com/jung-kurt/gofpdf"
@@ -433,25 +433,5 @@ func templateSplit(template string) (ret string, markUps []string) {
 }
 
 func loadFuncs(exts template.FuncMap) template.FuncMap {
-	funcMap := template.FuncMap{
-		"eq":       eq,
-		"Cell":     newCell,
-		"ToUpper":  strings.ToUpper,
-		"Currency": currencyFormat,
-		"Date":     formatDate,
-		"IntDate":  integerDateFormat,
-		"num2word": num2words.Convert,
-		"add":      add,
-		"subtract": subtract,
-		"multiply": multiply,
-		"divide":   divide,
-		"cb":       codeBlock,
-		"dict":     dictionary,
-		"yn":       boolString,
-	}
-
-	for key, val := range exts {
-		funcMap[key] = val
-	}
-	return funcMap
+	return functions.GetFunctionMap(exts)
 }

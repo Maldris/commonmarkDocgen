@@ -1,4 +1,4 @@
-package docgen
+package functions
 
 import (
 	"errors"
@@ -23,26 +23,6 @@ func integerDateFormat(tim int64) string {
 	return formatDate(date)
 }
 
-func add(a, b int) int {
-	return a + b
-}
-
-func subtract(a, b int) int {
-	return a - b
-}
-
-func multiply(a, b float64) float64 {
-	return a * b
-}
-
-func divide(a, b float64) float64 {
-	return a / b
-}
-
-func codeBlock() string {
-	return "```"
-}
-
 func dictionary(values ...interface{}) (map[string]interface{}, error) {
 	if len(values)%2 != 0 {
 		return nil, errors.New("invalid dict call")
@@ -56,11 +36,4 @@ func dictionary(values ...interface{}) (map[string]interface{}, error) {
 		dict[key] = values[i+1]
 	}
 	return dict, nil
-}
-
-func boolString(b bool) string {
-	if b {
-		return "Y"
-	}
-	return "N"
 }

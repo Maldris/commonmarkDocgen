@@ -1,4 +1,4 @@
-package docgen
+package functions
 
 import (
 	"fmt"
